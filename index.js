@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -39,32 +39,56 @@ async function run() {
 }
 run().catch(console.dir);
 
+// helper to ensure collection is ready
+function getCollectionOrError(res) {
+  if (!newitemsCollections) {
+    const msg = 'Database not connected yet';
+    console.error(msg);
+    res.status(503).json({ error: msg });
+    return null;
+  }
+  return newitemsCollections;
+}
+
 // post api
 app.post('/new-list', async (req,res)=>{
     try {
+      const col = getCollectionOrError(res);
+      if (!col) return;
       const newLIst = req.body;
-      const results = await newitemsCollections.insertOne(newLIst)
-      res.send(results)
+      const results = await col.insertOne(newLIst);
+      res.send(results);
     } catch (err) {
-      res.status(500).send({ error: err.message })
+      console.error('POST /new-list error:', err);
+      res.status(500).send({ error: err.message });
     }
 })
 
 // delete api
 app.delete('/new-list/:id', async(req,res)=>{
-  const id = req.params.id;
-  const query = { _id: new MongoClient.ObjectId(id) };
-  const result = await newitemsCollections.deleteOne(query);
-  res.send(result);
+  try {
+    const col = getCollectionOrError(res);
+    if (!col) return;
+    const id = req.params.id;
+    const query = { _id: new ObjectId(id) };
+    const result = await col.deleteOne(query);
+    res.send(result);
+  } catch (err) {
+    console.error('DELETE /new-list/:id error:', err);
+    res.status(500).json({ error: err.message });
+  }
 })
 
 // get api - fetch all items
 app.get('/new-list', async (req,res)=>{
     try {
-      const allItems = await newitemsCollections.find({}).toArray();
+      const col = getCollectionOrError(res);
+      if (!col) return;
+      const allItems = await col.find({}).toArray();
       res.send(allItems);
     } catch (err) {
-      res.status(500).send({ error: err.message })
+      console.error('GET /new-list error:', err);
+      res.status(500).send({ error: err.message });
     }
 })
 
