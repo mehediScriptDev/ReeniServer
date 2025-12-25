@@ -25,6 +25,7 @@ const client = new MongoClient(uri, {
 });
 
 let newitemsCollections;
+let historyCollection;
 
 async function run() {
   try {
@@ -32,6 +33,7 @@ async function run() {
     await client.connect();
 
     newitemsCollections = client.db('reeniDB').collection('newitems');
+    historyCollection = client.db('reeniDB').collection('history');
     console.log('Connected to MongoDB!');
   } catch (err) {
     console.error('MongoDB connection error:', err.message);
@@ -48,6 +50,21 @@ function getCollectionOrError(res) {
     return null;
   }
   return newitemsCollections;
+}
+
+function getHistoryCollectionOrError(res) {
+  if (!historyCollection) {
+    const msg = 'Database not connected yet';
+    console.error(msg);
+    res.status(503).json({ error: msg });
+    return null;
+  }
+  return historyCollection;
+}
+
+// helper to validate ObjectId format
+function isValidObjectId(id) {
+  return /^[0-9a-fA-F]{24}$/.test(id);
 }
 
 // post api
@@ -70,11 +87,33 @@ app.delete('/new-list/:id', async(req,res)=>{
     const col = getCollectionOrError(res);
     if (!col) return;
     const id = req.params.id;
+    if (!isValidObjectId(id)) {
+      return res.status(400).json({ error: 'Invalid ID format' });
+    }
     const query = { _id: new ObjectId(id) };
     const result = await col.deleteOne(query);
     res.send(result);
   } catch (err) {
     console.error('DELETE /new-list/:id error:', err);
+    res.status(500).json({ error: err.message });
+  }
+})
+
+// update api
+app.put('/new-list/:id', async (req, res) => {
+  try {
+    const col = getCollectionOrError(res);
+    if (!col) return;
+    const id = req.params.id;
+    if (!isValidObjectId(id)) {
+      return res.status(400).json({ error: 'Invalid ID format' });
+    }
+    const query = { _id: new ObjectId(id) };
+    const updateDoc = { $set: req.body };
+    const result = await col.updateOne(query, updateDoc, { upsert: false });
+    res.send(result);
+  } catch (err) {
+    console.error('PUT /new-list/:id error:', err);
     res.status(500).json({ error: err.message });
   }
 })
@@ -91,6 +130,53 @@ app.get('/new-list', async (req,res)=>{
       res.status(500).send({ error: err.message });
     }
 })
+
+// history apis
+
+// post history
+app.post('/history', async (req, res) => {
+  try {
+    const col = getHistoryCollectionOrError(res);
+    if (!col) return;
+    const historyItem = req.body;
+    const result = await col.insertOne(historyItem);
+    res.send(result);
+  } catch (err) {
+    console.error('POST /history error:', err);
+    res.status(500).send({ error: err.message });
+  }
+});
+
+// get all history
+app.get('/history', async (req, res) => {
+  try {
+    const col = getHistoryCollectionOrError(res);
+    if (!col) return;
+    const allHistory = await col.find({}).toArray();
+    res.send(allHistory);
+  } catch (err) {
+    console.error('GET /history error:', err);
+    res.status(500).send({ error: err.message });
+  }
+});
+
+// delete history item
+app.delete('/history/:id', async (req, res) => {
+  try {
+    const col = getHistoryCollectionOrError(res);
+    if (!col) return;
+    const id = req.params.id;
+    if (!isValidObjectId(id)) {
+      return res.status(400).json({ error: 'Invalid ID format' });
+    }
+    const query = { _id: new ObjectId(id) };
+    const result = await col.deleteOne(query);
+    res.send(result);
+  } catch (err) {
+    console.error('DELETE /history/:id error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 
 
