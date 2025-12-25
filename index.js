@@ -50,6 +50,14 @@ app.post('/new-list', async (req,res)=>{
     }
 })
 
+// delete api
+app.delete('/new-list/:id', async(req,res)=>{
+  const id = req.params.id;
+  const query = { _id: new MongoClient.ObjectId(id) };
+  const result = await newitemsCollections.deleteOne(query);
+  res.send(result);
+})
+
 // get api - fetch all items
 app.get('/new-list', async (req,res)=>{
     try {
