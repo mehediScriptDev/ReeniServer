@@ -90,4 +90,4 @@ node index.js
 
 ---
 
-Made with ❤️ for Reeni App
+Made with ❤️ for <a target="_blank" rel="noopener noreferrer" href="https://reeni-reminder.vercel.app">Reeni App</a>
