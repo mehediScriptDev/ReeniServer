@@ -115,8 +115,8 @@ let historyCollection;
 
 async function run() {
   try {
-    // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // Connect the client to the server (commented for Vercel serverless)
+    // await client.connect();
 
     newitemsCollections = client.db('reeniDB').collection('newitems');
     historyCollection = client.db('reeniDB').collection('history');
