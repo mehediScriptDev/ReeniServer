@@ -23,14 +23,14 @@ const transporter = nodemailer.createTransport({
 
 // Function to send reminder email
 async function sendReminderEmail(item) {
-  const isLender = item.type === 'আমি ধার দিয়েছি';
+  const isLender = item.category === 'lent';
   const subject = isLender 
-    ? `⏰ টাকা ফেরত পাওয়ার সময় পার হয়েছে - ${item.name}` 
+    ? `⏰ টাকা ফেরত পাওয়ার সময় পার হয়েছে - ${item.person}` 
     : `⏰ টাকা ফেরত দেওয়ার সময় পার হয়েছে`;
   
   const message = isLender
-    ? `প্রিয় ব্যবহারকারী,\n\n${item.name} এর কাছ থেকে ৳${item.amount} টাকা ফেরত পাওয়ার তারিখ (${item.returnDate}) পার হয়ে গেছে।\n\nঅনুগ্রহ করে তাকে মনে করিয়ে দিন।\n\n- Reeni App`
-    : `প্রিয় ব্যবহারকারী,\n\n${item.name} কে ৳${item.amount} টাকা ফেরত দেওয়ার তারিখ (${item.returnDate}) পার হয়ে গেছে।\n\nঅনুগ্রহ করে দ্রুত ফেরত দিন।\n\n- Reeni App`;
+    ? `প্রিয় ব্যবহারকারী,\n\n${item.person} এর কাছ থেকে ৳${item.amount} টাকা ফেরত পাওয়ার তারিখ (${item.dueDate}) পার হয়ে গেছে।\n\nঅনুগ্রহ করে তাকে মনে করিয়ে দিন।\n\n- Reeni App`
+    : `প্রিয় ব্যবহারকারী,\n\n${item.person} কে ৳${item.amount} টাকা ফেরত দেওয়ার তারিখ (${item.dueDate}) পার হয়ে গেছে।\n\nঅনুগ্রহ করে দ্রুত ফেরত দিন।\n\n- Reeni App`;
 
   const mailOptions = {
     from: process.env.EMAIL_USER,
@@ -41,7 +41,7 @@ async function sendReminderEmail(item) {
 
   try {
     await transporter.sendMail(mailOptions);
-    console.log(`Reminder email sent to ${item.email} for item: ${item.name}`);
+    console.log(`Reminder email sent to ${item.email} for item: ${item.person}`);
     return true;
   } catch (err) {
     console.error(`Failed to send email to ${item.email}:`, err.message);
@@ -60,13 +60,13 @@ async function checkOverdueAndSendReminders() {
   
   try {
     // Find items where:
-    // - returnDate has passed (less than today)
-    // - status is unpaid (ফেরত দেয়নি or ফেরত দেইনি)
+    // - dueDate has passed (less than today)
+    // - returned is false
     // - reminderSent is not true (to avoid spamming)
     // - has an email address
     const overdueItems = await newitemsCollections.find({
-      returnDate: { $lt: today },
-      status: { $in: ['ফেরত দেয়নি', 'ফেরত দেইনি'] },
+      dueDate: { $lt: today },
+      returned: false,
       reminderSent: { $ne: true },
       email: { $exists: true, $ne: '' }
     }).toArray();
@@ -204,13 +204,19 @@ app.put('/new-list/:id', async (req, res) => {
   }
 })
 
-// get api - fetch all items
+// get api - fetch all items for a user
 app.get('/new-list', async (req,res)=>{
     try {
       const col = getCollectionOrError(res);
       if (!col) return;
-      const allItems = await col.find({}).toArray();
-      res.send(allItems);
+      
+      const userId = req.query.userId;
+      if (!userId) {
+        return res.status(400).json({ error: 'userId is required' });
+      }
+      
+      const userItems = await col.find({ userId: userId }).toArray();
+      res.send(userItems);
     } catch (err) {
       console.error('GET /new-list error:', err);
       res.status(500).send({ error: err.message });
@@ -233,13 +239,19 @@ app.post('/history', async (req, res) => {
   }
 });
 
-// get all history
+// get all history for a user
 app.get('/history', async (req, res) => {
   try {
     const col = getHistoryCollectionOrError(res);
     if (!col) return;
-    const allHistory = await col.find({}).toArray();
-    res.send(allHistory);
+    
+    const userId = req.query.userId;
+    if (!userId) {
+      return res.status(400).json({ error: 'userId is required' });
+    }
+    
+    const userHistory = await col.find({ userId: userId }).toArray();
+    res.send(userHistory);
   } catch (err) {
     console.error('GET /history error:', err);
     res.status(500).send({ error: err.message });
