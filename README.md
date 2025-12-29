@@ -49,20 +49,6 @@ A Node.js/Express backend for the Reeni App - a loan/borrow tracking application
 | POST | `/check-overdue` | Manually trigger overdue check |
 | POST | `/test-email` | Test email configuration |
 
-## 📦 Data Structure
-
-```json
-{
-  "userId": "firebase-user-uid",
-  "amount": 100,
-  "person": "Tanjim",
-  "dueDate": "2025-12-25",
-  "returnDate": "2025-01-10",
-  "category": "lent",
-  "returned": false,
-  "email": "example@email.com"
-}
-```
 
 
 ## 🚀 Local Development
