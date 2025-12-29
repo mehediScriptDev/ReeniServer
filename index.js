@@ -56,31 +56,43 @@ async function checkOverdueAndSendReminders() {
     return;
   }
 
-  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
-  
+  // Use Dhaka local date so checks align with the cron timezone
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Dhaka' }); // YYYY-MM-DD
+
   try {
     // Find items where:
-    // - dueDate has passed (less than today)
+    // - dueDate is today or earlier (send on due day)
     // - returned is false
-    // - reminderSent is not true (to avoid spamming)
     // - has an email address
     const overdueItems = await newitemsCollections.find({
-      dueDate: { $lt: today },
+      dueDate: { $lte: today },
       returned: false,
-      reminderSent: { $ne: true },
       email: { $exists: true, $ne: '' }
     }).toArray();
 
-    console.log(`Found ${overdueItems.length} overdue items to send reminders`);
+    console.log(`Found ${overdueItems.length} overdue items (due today or earlier) to process`);
 
     for (const item of overdueItems) {
-      const sent = await sendReminderEmail(item);
-      if (sent) {
-        // Mark as reminder sent to avoid duplicate emails
-        await newitemsCollections.updateOne(
-          { _id: item._id },
-          { $set: { reminderSent: true, reminderSentAt: new Date() } }
-        );
+      try {
+        // Prevent sending more than once per day: if reminderSentAt exists and is today (Asia/Dhaka), skip
+        if (item.reminderSentAt) {
+          const lastSentDate = new Date(item.reminderSentAt).toLocaleDateString('en-CA', { timeZone: 'Asia/Dhaka' });
+          if (lastSentDate === today) {
+            console.log(`Skipping ${item._id} — already sent today (${today})`);
+            continue;
+          }
+        }
+
+        const sent = await sendReminderEmail(item);
+        if (sent) {
+          // Record that a reminder was sent now; do NOT set a permanent "reminderSent" flag so reminders continue until returned
+          await newitemsCollections.updateOne(
+            { _id: item._id },
+            { $set: { reminderSentAt: new Date() }, $inc: { reminderCount: 1 } }
+          );
+        }
+      } catch (innerErr) {
+        console.error(`Error processing item ${item._id}:`, innerErr?.message || innerErr);
       }
     }
   } catch (err) {
