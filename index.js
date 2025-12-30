@@ -25,12 +25,12 @@ const transporter = nodemailer.createTransport({
 async function sendReminderEmail(item) {
   const isLender = item.category === 'lent';
   const subject = isLender 
-    ? `⏰ টাকা ফেরত পাওয়ার সময় পার হয়েছে - ${item.person}` 
-    : `⏰ টাকা ফেরত দেওয়ার সময় পার হয়েছে`;
+    ? `${item.person} থেকে টাকা ফেরত পাওয়া` 
+    : `${item.person} কে টাকা ফেরত দেওয়া`;
   
   const message = isLender
-    ? `প্রিয় ব্যবহারকারী,\n\n${item.person} এর কাছ থেকে ৳${item.amount} টাকা ফেরত পাওয়ার তারিখ (${item.dueDate}) পার হয়ে গেছে।\n\nঅনুগ্রহ করে তাকে মনে করিয়ে দিন।\n\n- Reeni App`
-    : `প্রিয় ব্যবহারকারী,\n\n${item.person} কে ৳${item.amount} টাকা ফেরত দেওয়ার তারিখ (${item.dueDate}) পার হয়ে গেছে।\n\nঅনুগ্রহ করে দ্রুত ফেরত দিন।\n\n- Reeni App`;
+    ? `প্রিয় Reenian,\n\n${item.person} এর কাছ থেকে ৳${item.amount} টাকা ফেরত পাওয়ার তারিখ ছিল (${item.dueDate})।\n\nপ্রয়োজনে তাকে মনে করিয়ে দিন। আর টাকা ফেরত পেয়ে থাকলে Reeni অ্যাপ-এ স্ট্যাটাস আপডেট করে দিন "ফেরত পেয়েছি"।\n\n- Reeni - Reminder`
+    : `প্রিয় Reenian,\n\n${item.person} কে ৳${item.amount} টাকা ফেরত দেওয়ার তারিখ ছিল (${item.dueDate})।\n\nঅনুগ্রহ করে আজই ফেরত দিন। আর ইতিমধ্যে ফেরত দিয়ে থাকলে Reeni অ্যাপ-এ স্ট্যাটাস আপডেট করে দিন "ফেরত দিয়েছি"।\n\n- Reeni - Reminder`;
 
   const mailOptions = {
     from: process.env.EMAIL_USER,
