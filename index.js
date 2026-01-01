@@ -25,8 +25,8 @@ const transporter = nodemailer.createTransport({
 async function sendReminderEmail(item) {
   const isLender = item.category === 'lent';
   const subject = isLender 
-    ? `${item.person} থেকে টাকা ফেরত পাওয়া` 
-    : `${item.person} কে টাকা ফেরত দেওয়া`;
+    ? `${item.person} এর থেকে টাকা ফেরত নিন` 
+    : `${item.person} কে টাকা ফেরত দিন`;
   
   const message = isLender
     ? `প্রিয় Reenian,\n\n${item.person} এর কাছ থেকে ৳${item.amount} টাকা ফেরত পাওয়ার তারিখ ছিল (${item.dueDate})।\n\nপ্রয়োজনে তাকে মনে করিয়ে দিন। আর টাকা ফেরত পেয়ে থাকলে Reeni অ্যাপ-এ স্ট্যাটাস আপডেট করে দিন "ফেরত পেয়েছি"।\n\n- Reeni - Reminder`
