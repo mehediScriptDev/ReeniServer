@@ -29,8 +29,8 @@ async function sendReminderEmail(item) {
     : `${item.person} কে টাকা ফেরত দিন`;
   
   const message = isLender
-    ? `প্রিয় Reenian,\n\n${item.person} এর কাছ থেকে ৳${item.amount} টাকা ফেরত পাওয়ার তারিখ ছিল (${item.dueDate})।\n\nপ্রয়োজনে তাকে মনে করিয়ে দিন। আর টাকা ফেরত পেয়ে থাকলে Reeni অ্যাপ-এ স্ট্যাটাস আপডেট করে দিন "ফেরত পেয়েছি"।\n\n- Reeni - Reminder`
-    : `প্রিয় Reenian,\n\n${item.person} কে ৳${item.amount} টাকা ফেরত দেওয়ার তারিখ ছিল (${item.dueDate})।\n\nঅনুগ্রহ করে আজই ফেরত দিন। আর ইতিমধ্যে ফেরত দিয়ে থাকলে Reeni অ্যাপ-এ স্ট্যাটাস আপডেট করে দিন "ফেরত দিয়েছি"।\n\n- Reeni - Reminder`;
+    ? `প্রিয় Reenian,\n\n${item.person} এর কাছ থেকে ${item.amount} টাকা ফেরত পাওয়ার তারিখ ছিল (${item.dueDate})।\n\nপ্রয়োজনে তাকে মনে করিয়ে দিন। আর টাকা ফেরত পেয়ে থাকলে Reeni অ্যাপ-এ স্ট্যাটাস আপডেট করে দিন "ফেরত পেয়েছি"।\n\n- Reeni - Reminder`
+    : `প্রিয় Reenian,\n\n${item.person} কে ${item.amount} টাকা ফেরত দেওয়ার তারিখ ছিল (${item.dueDate})।\n\nঅনুগ্রহ করে আজই ফেরত দিন। আর ইতিমধ্যে ফেরত দিয়ে থাকলে Reeni অ্যাপ-এ স্ট্যাটাস আপডেট করে দিন "ফেরত দিয়েছি"।\n\n- Reeni - Reminder`;
 
   const mailOptions = {
     from: process.env.EMAIL_USER,
